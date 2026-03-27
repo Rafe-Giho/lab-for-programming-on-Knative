@@ -1,5 +1,8 @@
 # Python Runner 구축 실행 문서
 
+> 참고: 이 문서는 통합 체크리스트 참조본이다.  
+> 앞으로 실제 작업 관리는 `docs/infra/gateway-api-platform-build-guide.md`와 `docs/app/python-runner-application-development-guide.md`를 기준으로 진행한다.
+
 작성일: 2026-03-27  
 대상: NHN NKS 위에 팀원용 Python 실행 웹서비스를 구축하려는 작업자
 
@@ -19,16 +22,52 @@ Knative 설치부터 시작해서, 도메인/HTTPS를 붙이고 최종적으로 
 - Python 코드 실행 시 사용자 간 실행 환경이 섞이지 않음
 - Python 3.8 ~ 최신 주요 버전 지원
 - 추후 Java, C, C++ 확장 가능
-- `jininfra.cloud` 도메인 사용
+- `labs.jininfra.cloud` 도메인 사용
 - HTTPS 적용
+
+## 현재 기준 권장 버전
+
+기준일: 2026-03-27
+
+중요:
+
+- [ ] 아래 권장 버전은 "현재 공식 지원 상태 + NKS 호환 범위 + Knative 요구사항"을 함께 고려한 값이다.
+- [ ] 현재 확인된 클러스터 버전은 `Kubernetes v1.33.4`
+- [ ] NKS 기준 해당 버전의 서비스 지원 종료 예정일은 `2027-01-31 (UTC+00:00)`이다.
+
+### 권장 조합
+
+- [ ] NKS Kubernetes 버전
+  - 현재 클러스터: `v1.33.4`
+  - 이 버전 기준으로 아래 조합 사용 권장
+- [ ] Knative Serving
+  - `v1.21.2`
+- [ ] Knative `net-gateway-api`
+  - `knative-v1.21.0`
+- [ ] Gateway API CRD
+  - `v1.4.1` `standard-install.yaml`
+- [ ] Istio
+  - `1.29.1`
+- [ ] `istioctl`
+  - `1.29.1`
+- [ ] cert-manager
+  - `v1.19.2`
+
+### 현재 클러스터 기준 결론
+
+- [ ] 현재 클러스터가 `v1.33.4`이므로 위 조합을 그대로 사용한다.
+- [ ] 특히 Knative `v1.21.2`는 최소 Kubernetes `1.33` 조건과 맞는다.
+- [ ] Istio / `istioctl`은 `1.29.1`로 통일한다.
+- [ ] Gateway API CRD는 `v1.4.1 standard`를 사용한다.
 
 ## 권장 구현 방향
 
 - 웹서비스는 Knative Service로 배포
 - 실제 코드 실행은 요청마다 별도 Job/Pod에서 처리
-- 외부 노출은 아래 중 하나 선택
-  - 1안: `net-istio`
-  - 2안: `net-gateway-api` + Istio Gateway API 구현
+- 외부 노출은 Knative 공식 설치 문서의 네트워킹 계층 중 하나를 완성 상태로 선택
+  - 1안: `Kourier`
+  - 2안: `Istio`
+  - 3안: `Gateway API`
 - HTTPS는 `cert-manager`로 처리
 
 ## Phase 0. 작업 준비
@@ -38,9 +77,9 @@ Knative 설치부터 시작해서, 도메인/HTTPS를 붙이고 최종적으로 
 - [ ] NKS 클러스터 접근 가능한 `kubectl` 환경 준비
 - [ ] 현재 Kubernetes 버전 확인
 - [ ] 사용할 컨테이너 레지스트리 결정
-- [ ] `jininfra.cloud`의 DNS 운영 방식 결정
-  - 루트 도메인 전체를 NHN DNS Plus에서 관리할지
-  - `apps.jininfra.cloud` 같은 서브도메인만 NHN DNS Plus에서 관리할지
+- [ ] `labs.jininfra.cloud`의 DNS 운영 방식 결정
+  - `jininfra.cloud` 상위 DNS에서 `labs.jininfra.cloud`를 NHN DNS Plus로 위임할지
+  - 또는 `jininfra.cloud` 전체를 NHN DNS Plus에서 관리할지
 - [ ] 서비스용 네임스페이스 이름 결정
   - 예: `study`
 - [ ] 실행 전용 네임스페이스 이름 결정
@@ -97,76 +136,227 @@ kubectl get pods -n knative-serving
 
 ## Phase 3. 네트워킹 경로 결정
 
-이 단계에서 아래 두 경로 중 하나를 결정한다.
+Knative 공식 설치 문서 기준 네트워킹 계층 선택지는 아래 셋이다.
 
-- [ ] 경로 A: `net-istio`
-- [ ] 경로 B: `net-gateway-api` + Istio Gateway API
+- [ ] 경로 A: `Kourier`
+- [ ] 경로 B: `Istio`
+- [ ] 경로 C: `Gateway API`
 
 ### 선택 기준
 
-- [ ] 빠르게 안정적인 MVP를 먼저 열고 싶으면 `net-istio` 선택
-- [ ] 장기적으로 Gateway/HTTPRoute 중심 표준화를 원하면 `net-gateway-api` 선택
+- [ ] 빠른 설치와 단순한 진입이 목적이면 `Kourier`
+- [ ] Knative 공식 Istio 탭 절차를 그대로 따르고 싶으면 `Istio`
+- [ ] Gateway/HTTPRoute 중심 표준화가 목적이면 `Gateway API`
+
+중요:
+
+- [ ] `Gateway API`는 별도 구현체가 먼저 있어야 한다.
+- [ ] 이번 NKS 환경에서는 `Gateway API` 구현체로 `Istio`를 쓰는 구성이 현실적이다.
 
 ### 완료 기준
 
 - [ ] 사용할 네트워킹 경로가 하나로 확정됨
 
-## Phase 4. Istio 설치
+## Phase 4. 선택한 네트워킹 계층 설치 준비
 
-Kourier를 쓰고 있어도, 최종 목표가 Istio 기반이므로 이 단계를 수행한다.
+Knative 공식 설치 문서 기준 네트워킹 계층은 `Kourier`, `Istio`, `Gateway API` 세 가지다.  
+이 단계에서는 선택한 경로에 필요한 준비만 수행한다.
 
-### 해야 할 일
+### 4.1 공통 확인
 
-- [ ] NKS 가이드 기준으로 현재 Kubernetes 버전에 맞는 Istio 버전 확인
-- [ ] `istioctl` 준비
-- [ ] Istio 설치
-- [ ] `istio-system` Pod 상태 확인
-- [ ] 외부용 Gateway/LB 노출 방식 확인
+- [ ] 현재 클러스터가 어떤 네트워킹 계층을 쓰는지 확인
+- [ ] 선택한 경로의 공식 절차를 다시 확인
+- [ ] 현재 환경이 `기존 Kourier에서 다른 계층으로 전환`인지, 아니면 `처음부터 새로 설치`인지 구분
+- [ ] Kourier를 지운 상태만으로 `Istio` 또는 `Gateway API` 구성이 완료된 것이 아니라는 점 확인
+- [ ] `net-gateway-api` Pod만 있어도 `Gateway API` 경로가 완성된 것은 아니며, CRD + 구현체 + 실제 `Gateway`가 모두 있어야 함을 확인
+- [ ] `Istio` 또는 `Gateway API`를 선택하면 `istiod`와 gateway pod가 올라갈 메모리 여유가 있는지 먼저 확인
+
+### 4.2 경로 A. `Kourier`
+
+- [ ] 별도 `istioctl` 준비 불필요
+- [ ] 별도 Gateway API CRD 불필요
+- [ ] Phase 5의 Kourier 설치 절차로 바로 진행
+
+### 4.3 경로 B. `Istio`
+
+Knative 공식 설치 문서의 Istio 탭은 `istio.yaml`과 `net-istio.yaml`을 쓰는 방식이다.  
+즉, 공식 절차만 따르면 `istioctl`은 필수가 아니다.
+
+- [ ] 공식 Knative Istio YAML 경로를 그대로 사용할지 결정
+- [ ] 또는 NKS 환경에 맞춰 `istioctl`로 커스텀 Istio를 설치할지 결정
+
+#### 4.3.1 커스텀 Istio를 쓸 때만 `istioctl` 준비
+
+- [ ] 목표 Istio 버전 확정
+- [ ] WSL/Linux 기준 `istioctl` 다운로드
+- [ ] `PATH` 등록
+- [ ] `istioctl version` 확인
+
+WSL/Linux 예시:
+
+```bash
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=<ISTIO_VERSION> sh -
+cd istio-<ISTIO_VERSION>
+export PATH="$PWD/bin:$PATH"
+istioctl version
+which istioctl
+```
+
+### 4.4 경로 C. `Gateway API`
+
+Knative 공식 설치 문서 기준 `Gateway API`는 별도 Gateway API 구현체가 먼저 있어야 한다.
+
+- [ ] Gateway API CRD 존재 여부 확인
+
+```bash
+kubectl get crd gateways.gateway.networking.k8s.io
+```
+
+- [ ] 구현체 선택
+  - 이번 NKS 환경 권장: `Istio`
+- [ ] 구현체가 `Istio`면
+  - Knative 공식 Istio YAML 경로 또는
+  - `istioctl` 기반 커스텀 Istio 경로
+  둘 중 하나를 준비
 
 ### 완료 기준
 
-- [ ] `istio-system` 구성 요소가 정상 상태
-- [ ] 외부 유입을 받을 Istio 진입 지점이 준비됨
+- [ ] Kourier면 바로 설치 단계로 갈 준비 완료
+- [ ] Istio면 공식 YAML 또는 커스텀 Istio 준비 완료
+- [ ] Gateway API면 CRD + 구현체 준비 방향이 확정됨
 
-## Phase 5. Knative 네트워킹 연결
+## Phase 5. Knative 네트워킹 계층 설치 및 연결
 
-### 경로 A. `net-istio`
+### 경로 A. `Kourier`
 
-#### 해야 할 일
+- [ ] Kourier 설치
+
+```bash
+kubectl apply -f https://github.com/knative-extensions/net-kourier/releases/download/knative-v1.21.0/kourier.yaml
+```
+
+- [ ] Kourier ingress class 적용
+
+```bash
+kubectl patch configmap/config-network \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
+```
+
+- [ ] 외부 주소 확인
+
+```bash
+kubectl get svc -n kourier-system
+```
+
+### 경로 B. `Istio`
+
+#### 5.1 공식 Knative YAML 경로
+
+- [ ] Knative 공식 Istio 구성 설치
+
+```bash
+kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative-extensions/net-istio/releases/download/knative-v1.21.1/istio.yaml
+kubectl apply -f https://github.com/knative-extensions/net-istio/releases/download/knative-v1.21.1/istio.yaml
+```
+
+#### 5.2 커스텀 Istio 경로
+
+- [ ] `istioctl`로 Istio 설치
+
+예시:
+
+```bash
+istioctl version
+istioctl install --set profile=default -y
+```
+
+주의:
+
+- [ ] 외부 트래픽 수신용 ingress gateway가 필요
+- [ ] `minimal`만 설치하면 `istio-ingressgateway`가 없을 수 있음
+
+#### 5.3 Knative Istio 연결
 
 - [ ] `net-istio` 설치
 
 ```bash
-kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.21.1/net-istio.yaml
+kubectl apply -f https://github.com/knative-extensions/net-istio/releases/download/knative-v1.21.1/net-istio.yaml
 ```
 
-- [ ] Knative ingress class 변경
+- [ ] Knative ingress class 적용
 
 ```bash
 kubectl patch configmap/config-network \
-  -n knative-serving \
+  --namespace knative-serving \
   --type merge \
   --patch '{"data":{"ingress-class":"istio.ingress.networking.knative.dev"}}'
 ```
 
-- [ ] `net-istio-controller` 상태 확인
-- [ ] 샘플 서비스 재배포로 확인
+- [ ] 외부 주소 확인
 
-### 경로 B. `net-gateway-api` + Istio Gateway API
+```bash
+kubectl get svc -n istio-system
+```
 
-#### 해야 할 일
+### 경로 C. `Gateway API`
 
-- [ ] Gateway API CRD/구현 가능 여부 확인
-- [ ] 외부용 Gateway 준비
-- [ ] 내부용 local Gateway 준비
-- [ ] `net-gateway-api` 설치
+#### 5.1 Gateway API CRD 설치
+
+```bash
+kubectl get crd gateways.gateway.networking.k8s.io > /dev/null 2>&1 || \
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml
+```
+
+#### 5.2 Gateway API 구현체 준비
+
+- [ ] 이번 가이드 기준 권장 구현체: `Istio`
+- [ ] 구현체가 `Istio`면 Phase 5의 `Istio 설치` 절차까지만 먼저 수행
+
+#### 5.3 Knative Gateway API 컨트롤러 설치
 
 ```bash
 kubectl apply -f https://github.com/knative-extensions/net-gateway-api/releases/download/knative-v1.21.0/net-gateway-api.yaml
 ```
 
-- [ ] `config-gateway` 설정
-- [ ] Knative ingress class 변경
+#### 5.4 Gateway 리소스 준비
+
+- [ ] 외부용 Gateway 생성
+- [ ] 필요하면 로컬 Gateway 생성
+- [ ] backing Service와 외부 주소 확인
+
+예시 확인:
+
+```bash
+kubectl get gateway -A
+kubectl get svc -A
+```
+
+#### 5.5 `config-gateway` 설정
+
+Knative 공식 문서 예시:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-gateway
+  namespace: knative-serving
+data:
+  external-gateways: |
+    - name: knative-ingress-gateway
+      namespace: knative-serving
+      service: knative-ingress-service.knative-serving.svc.cluster.local
+  local-gateways: |
+    - name: knative-local-gateway
+      namespace: knative-serving
+      service: knative-local-service.knative-serving.svc.cluster.local
+```
+
+- [ ] 실제 Gateway 이름, 네임스페이스, backing Service FQDN에 맞게 수정
+
+#### 5.6 Knative ingress class 적용
 
 ```bash
 kubectl patch configmap/config-network \
@@ -175,22 +365,27 @@ kubectl patch configmap/config-network \
   --patch '{"data":{"ingress-class":"gateway-api.ingress.networking.knative.dev"}}'
 ```
 
-- [ ] `net-gateway-api` Pod 상태 확인
-- [ ] 샘플 서비스 재배포로 확인
+#### 5.7 확인
+
+```bash
+kubectl describe configmaps config-gateway -n knative-serving
+kubectl get httproute -A
+kubectl get gateway -A
+```
 
 ### 공통 완료 기준
 
-- [ ] 새로운 네트워킹 경로로 Knative 샘플 서비스 접근 가능
-- [ ] 이전 Kourier 경로에 의존하지 않고 동작 확인
+- [ ] 선택한 네트워킹 계층으로 Knative 샘플 서비스 접근 가능
+- [ ] 외부 주소(IP 또는 hostname)를 확보함
 
-## Phase 6. Kourier 정리
+## Phase 6. 기존 Kourier 정리(Optional Migration)
 
-새 경로가 안정적으로 동작한 뒤에만 수행한다.
+이 단계는 현재처럼 Kourier가 이미 설치된 환경에서 다른 네트워킹 계층으로 넘어갈 때만 수행한다.
 
 ### 해야 할 일
 
-- [ ] 샘플 서비스 재배포 후 새 경로에서 반복 검증
-- [ ] 기존 Kourier 의존성이 없는지 확인
+- [ ] 새 네트워킹 계층으로 샘플 서비스 반복 검증
+- [ ] Kourier 의존성이 없는지 확인
 - [ ] Kourier 제거
 
 ```bash
@@ -199,19 +394,21 @@ kubectl delete -f https://github.com/knative-extensions/net-kourier/releases/dow
 
 ### 완료 기준
 
-- [ ] Kourier 제거 후에도 서비스가 정상 접근 가능
+- [ ] Kourier 제거 후에도 새 경로로 서비스 접근 가능
 
 ## Phase 7. 도메인 구성
 
 ### 해야 할 일
 
 - [ ] 운영 도메인 방식 결정
-  - `apps.jininfra.cloud`를 Knative 기본 도메인으로 쓸지
-  - `python-lab.jininfra.cloud` 같은 단일 운영 URL을 추가로 쓸지
+  - `labs.jininfra.cloud`를 Knative 기본 도메인으로 사용
+  - 필요하면 `python-runner.labs.jininfra.cloud` 같은 단일 운영 URL을 추가로 사용할지 결정
 - [ ] NHN DNS Plus에 DNS Zone 생성
 - [ ] 필요한 경우 도메인 등록기관 또는 상위 DNS에 NS 위임
-- [ ] LB Public IP 확인
-- [ ] A 레코드 등록
+- [ ] 선택한 네트워킹 계층이 노출한 외부 주소 확인
+- [ ] DNS 레코드 등록
+  - 외부 주소가 IP면 `A`
+  - 외부 주소가 hostname이면 `CNAME`
   - 기본 도메인 사용 시 wildcard 또는 필요한 호스트
   - 단일 운영 URL 사용 시 해당 호스트
 - [ ] Knative `config-domain` 설정
@@ -224,10 +421,24 @@ kubectl edit configmap config-domain -n knative-serving
 
 ```yaml
 data:
-  apps.jininfra.cloud: ""
+  labs.jininfra.cloud: ""
 ```
 
 - [ ] 필요하면 `DomainMapping` 적용
+
+### `labs.jininfra.cloud` 기준 예시
+
+- [ ] `config-domain`을 `labs.jininfra.cloud`로 잡으면
+  - `hello` 서비스를 `default` 네임스페이스에 배포했을 때 기본 URL은 `hello.default.labs.jininfra.cloud`
+  - 실제 앱을 `study` 네임스페이스에 배포했을 때 기본 URL은 `study-code-runner.study.labs.jininfra.cloud`
+
+- [ ] NHN DNS Plus에 `labs.jininfra.cloud` Zone을 만들었다면
+  - `hello.default.labs.jininfra.cloud` 테스트용으로는 레코드 이름 `*.default`
+  - 실제 앱 `study` 네임스페이스용으로는 레코드 이름 `*.study`
+  - 값은 선택한 네트워킹 계층이 노출한 외부 LB IP 또는 외부 hostname
+
+- [ ] 외부 주소가 IP면 A 레코드
+- [ ] 외부 주소가 hostname이면 CNAME 레코드
 
 ### 완료 기준
 
@@ -241,9 +452,9 @@ data:
 ### 8.1 먼저 결정할 것
 
 - [ ] 운영 URL을 단일 호스트로 갈지 결정
-  - 예: `python-lab.jininfra.cloud`
+  - 예: `python-runner.labs.jininfra.cloud`
 - [ ] wildcard가 정말 필요한지 결정
-  - 예: `*.apps.jininfra.cloud`
+  - 예: `*.study.labs.jininfra.cloud`
 - [ ] 1차는 단일 운영 URL + `HTTP-01`로 갈지 결정
 - [ ] 추후 wildcard가 필요하면 `DNS-01`을 별도 과제로 둘지 결정
 
@@ -251,7 +462,7 @@ data:
 
 1차 오픈 기준 권장안은 아래다.
 
-- [ ] 운영 URL: `python-lab.jininfra.cloud`
+- [ ] 운영 URL: `python-runner.labs.jininfra.cloud`
 - [ ] 발급 방식: `cert-manager` + Let's Encrypt `HTTP-01`
 - [ ] 이유:
   - DNS API 연동 없이 발급 가능
@@ -263,6 +474,7 @@ data:
 인증서 발급 전에 아래를 먼저 만족시켜야 한다.
 
 - [ ] 운영 URL의 A 레코드가 외부 LB Public IP를 가리킴
+- [ ] 또는 운영 URL의 CNAME이 외부 hostname을 가리킴
 - [ ] 외부에서 80 포트 접근 가능
 - [ ] 443 포트도 최종적으로 열 예정인지 확인
 - [ ] 방화벽/보안그룹/ACL에서 HTTP-01 검증 경로를 막지 않는지 확인
@@ -336,13 +548,14 @@ kubectl get crd | findstr cert-manager.io
 - [ ] solver 방식
   - 1차 권장: `HTTP-01`
 - [ ] solver가 어떤 경로로 트래픽을 받을지
+  - Kourier 외부 서비스 경로
   - Istio Gateway 경로
   - Gateway API 경로
 
 ### 8.7 `HTTP-01` 방식으로 갈 때 해야 할 일
 
 - [ ] 운영 URL이 외부에서 바로 열리는지 확인
-- [ ] 운영 Gateway 또는 Gateway API가 80 포트를 수신하는지 확인
+- [ ] 선택한 네트워킹 계층의 외부 진입점이 80 포트를 수신하는지 확인
 - [ ] 스테이징 `ClusterIssuer` 생성
 - [ ] 스테이징 인증서 요청
 - [ ] `Challenge`, `Order`, `Certificate` 상태 확인
@@ -366,7 +579,14 @@ kubectl get crd | findstr cert-manager.io
   - `_acme-challenge` 서브도메인만 다른 지원 DNS로 위임
   - wildcard를 포기하고 단일 호스트 인증서 유지
 
-### 8.9 `net-istio` 경로에서의 반영 작업
+### 8.9 `Kourier` 경로에서의 반영 작업
+
+- [ ] Kourier 외부 서비스가 80/443 트래픽을 받을 수 있는지 확인
+- [ ] 운영 호스트가 Kourier 외부 주소로 정상 라우팅되는지 확인
+- [ ] 인증서 secret을 어느 네임스페이스에서 관리할지 결정
+- [ ] Knative 외부 도메인 TLS 적용 방식과 `cert-manager` 연동 범위를 문서화
+
+### 8.10 `net-istio` 경로에서의 반영 작업
 
 - [ ] TLS를 종단할 리소스 결정
   - Istio Gateway
@@ -375,7 +595,7 @@ kubectl get crd | findstr cert-manager.io
 - [ ] Gateway에 TLS secret 연결
 - [ ] 운영 호스트가 해당 Gateway를 통과하는지 확인
 
-### 8.10 `net-gateway-api` 경로에서의 반영 작업
+### 8.11 `net-gateway-api` 경로에서의 반영 작업
 
 - [ ] Gateway 리스너에 `hostname`, `port`, `protocol` 구성이 맞는지 확인
 - [ ] Gateway가 TLS termination을 담당할지 결정
@@ -383,7 +603,7 @@ kubectl get crd | findstr cert-manager.io
 - [ ] cert-manager가 Gateway 리소스 또는 관련 `Certificate`를 처리하도록 구성
 - [ ] 발급 후 Gateway listener에 secret 반영
 
-### 8.11 Knative 내부 cert-manager 연동 여부 판단
+### 8.12 Knative 내부 cert-manager 연동 여부 판단
 
 이 항목은 "브라우저에서 외부 URL 접속"과는 별개의 주제다.
 
@@ -399,7 +619,7 @@ kubectl get crd | findstr cert-manager.io
 - [ ] 외부 운영 URL HTTPS를 먼저 완료
 - [ ] 내부 TLS는 필요성이 생길 때 별도 작업으로 진행
 
-### 8.12 운영 반영 전 최종 검증
+### 8.13 운영 반영 전 최종 검증
 
 - [ ] staging 인증서로 전체 경로 확인
 - [ ] production 인증서 발급 후 브라우저 경고 없음 확인
@@ -409,9 +629,9 @@ kubectl get crd | findstr cert-manager.io
 - [ ] HTTPS 접속 후 실제 앱 응답 확인
 - [ ] HTTP 접속 시 HTTPS로 보낼지 정책 결정
 
-### 8.13 완료 기준
+### 8.14 완료 기준
 
-- [ ] `https://python-lab.jininfra.cloud` 같은 운영 URL이 경고 없이 열림
+- [ ] `https://python-runner.labs.jininfra.cloud` 같은 운영 URL이 경고 없이 열림
 - [ ] 인증서 secret과 Gateway 연결 상태가 문서화됨
 - [ ] 자동 갱신 구조를 점검함
 - [ ] 장애 시 어디를 봐야 하는지 알고 있음
@@ -733,7 +953,7 @@ kubectl get crd | findstr cert-manager.io
 - [ ] 애플리케이션 로그 확인
 - [ ] runner Job 관련 이벤트 확인
 - [ ] `cert-manager` 이벤트 확인
-- [ ] Istio 또는 Gateway API 상태 확인
+- [ ] 선택한 네트워킹 계층 상태 확인
 
 ### 완료 기준
 
@@ -790,8 +1010,8 @@ kubectl get crd | findstr cert-manager.io
 ## 최종 체크
 
 - [ ] Knative Serving 정상
-- [ ] Istio 또는 Gateway API 경로 정상
-- [ ] Kourier 제거 완료
+- [ ] 선택한 네트워킹 경로 정상
+- [ ] `Kourier`를 선택하지 않은 경우에만 Kourier 제거 완료
 - [ ] 도메인 연결 완료
 - [ ] HTTPS 적용 완료
 - [ ] 웹서비스 배포 완료
