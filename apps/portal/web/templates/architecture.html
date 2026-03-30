@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JIN INFRA Code Runner Lab Architecture</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a href="/" class="brand" aria-label="JIN INFRA Code Runner Lab 홈">
+          <img src="/static/jininfra-ci-domain.png" alt="JIN INFRA" class="brand-logo" />
+        </a>
+        <div class="topbar-right">
+          <nav class="topnav" aria-label="주요 메뉴">
+            <a href="/" class="topnav-link{{ if eq .CurrentPath "/" }} is-active{{ end }}">Runner Lab</a>
+            <a href="/architecture" class="topnav-link{{ if eq .CurrentPath "/architecture" }} is-active{{ end }}">Architecture</a>
+          </nav>
+          <span class="pill pill--strong">Mode {{ .ExecutorMode }}</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel--hero architecture-hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Service Architecture</p>
+            <h1>Code Runner Lab 실행 구조</h1>
+            <p class="summary">
+              사용자가 웹에서 코드를 제출하면 포털이 Kubernetes Job을 만들고, 선택한 언어와 버전에
+              맞는 러너 컨테이너가 격리된 환경에서 코드를 실행한 뒤 결과를 다시 포털로 반환합니다.
+            </p>
+          </div>
+          <aside class="hero-side">
+            <div class="hero-card">
+              <span class="hero-card__label">Supported Runtimes</span>
+              {{ range .RuntimeSummaries }}
+              <strong>{{ .Label }} {{ range $index, $version := .Versions }}{{ if $index }}, {{ end }}{{ $version }}{{ end }}</strong>
+              {{ end }}
+            </div>
+          </aside>
+        </section>
+
+        <section class="panel architecture-panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Flow</p>
+              <h2>실행 흐름</h2>
+            </div>
+          </div>
+
+          <div class="architecture-flow">
+            <article class="arch-node">
+              <span class="arch-node__step">1</span>
+              <strong>Browser</strong>
+              <p>사용자가 코드와 언어, 버전을 선택해 실행 요청을 보냅니다.</p>
+            </article>
+            <article class="arch-node">
+              <span class="arch-node__step">2</span>
+              <strong>Knative Portal</strong>
+              <p>포털이 요청을 검증하고 실행할 런타임 이미지를 결정합니다.</p>
+            </article>
+            <article class="arch-node">
+              <span class="arch-node__step">3</span>
+              <strong>Kubernetes Job</strong>
+              <p>요청마다 별도 Job과 Pod를 생성해 실행을 분리합니다.</p>
+            </article>
+            <article class="arch-node">
+              <span class="arch-node__step">4</span>
+              <strong>Language Runner</strong>
+              <p>선택한 언어/버전 러너가 코드를 실행하고 로그와 종료코드를 남깁니다.</p>
+            </article>
+            <article class="arch-node">
+              <span class="arch-node__step">5</span>
+              <strong>Result Return</strong>
+              <p>포털이 결과를 수집해 사용자 화면에 출력합니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="workspace architecture-workspace">
+          <section class="panel architecture-card">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Components</p>
+                <h2>구성 요소</h2>
+              </div>
+            </div>
+
+            <div class="info-list">
+              <article class="info-item">
+                <strong>Portal Service</strong>
+                <span>화면 제공, 입력 검증, Job 생성 요청, 로그 수집을 담당합니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>Execution Namespace</strong>
+                <span>실행 Pod를 별도 네임스페이스에서 관리해 권한과 자원을 분리합니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>Runner Images</strong>
+                <span>Python, Java, C, C++용 언어/버전별 이미지가 따로 준비되어 선택한 런타임에 맞춰 실행됩니다.</span>
+              </article>
+            </div>
+          </section>
+
+          <aside class="panel architecture-card">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Isolation</p>
+                <h2>격리 포인트</h2>
+              </div>
+            </div>
+
+            <div class="info-list">
+              <article class="info-item">
+                <strong>요청 단위 분리</strong>
+                <span>실행 요청마다 Pod가 따로 생성되어 상태가 섞이지 않습니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>임시 작업 공간</strong>
+                <span>코드는 Pod 내부 작업 공간에만 기록되고 완료 후 Job TTL에 따라 정리됩니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>실행 제한</strong>
+                <span>타임아웃, 리소스 제한, non-root 실행 설정을 함께 적용합니다.</span>
+              </article>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

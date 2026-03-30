@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: runner-defaults
+  namespace: code-runner-exec
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 192Mi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: runner-quota
+  namespace: code-runner-exec
+spec:
+  hard:
+    count/jobs.batch: "100"
+    pods: "12"
+    requests.cpu: "2"
+    requests.memory: 3Gi
+    limits.cpu: "6"
+    limits.memory: 6Gi

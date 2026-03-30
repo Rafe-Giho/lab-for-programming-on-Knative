@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JIN INFRA Code Runner Lab</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a href="/" class="brand" aria-label="JIN INFRA Code Runner Lab 홈">
+          <img src="/static/jininfra-ci-domain.png" alt="JIN INFRA" class="brand-logo" />
+        </a>
+        <div class="topbar-right">
+          <nav class="topnav" aria-label="주요 메뉴">
+            <a href="/" class="topnav-link{{ if eq .CurrentPath "/" }} is-active{{ end }}">Runner Lab</a>
+            <a href="/architecture" class="topnav-link{{ if eq .CurrentPath "/architecture" }} is-active{{ end }}">Architecture</a>
+          </nav>
+          <span class="pill pill--strong">Mode {{ .ExecutorMode }}</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="hero panel panel--hero">
+          <div class="hero-copy">
+            <p class="eyebrow">JIN INFRA CODE RUNNER LAB</p>
+            <h1>브라우저에서 바로 실행하는 사내 코드 학습 서비스</h1>
+            <p class="summary">
+              <strong>labs.jininfra.cloud</strong>에서 자유롭게 학습하시기 바랍니다.
+              Python, Java, C, C++ 예제 코드를 직접 실행해볼 수 있고, 실행 결과와 종료코드를 바로
+              확인하면서 문법, 알고리즘, 실습 문제를 빠르게 검증할 수 있습니다.
+            </p>
+
+            <div class="hero-highlights">
+              <article class="highlight">
+                <strong>지원 언어</strong>
+                <span>Python, Java, C, C++를 한 화면에서 선택해 실행할 수 있습니다.</span>
+              </article>
+              <article class="highlight">
+                <strong>격리 실행</strong>
+                <span>요청마다 분리된 실행 환경으로 처리되어 결과가 서로 섞이지 않습니다.</span>
+              </article>
+              <article class="highlight">
+                <strong>구조 보기</strong>
+                <span><a href="/architecture" class="inline-link">아키텍처 페이지</a>에서 실행 흐름과 구성 요소를 확인할 수 있습니다.</span>
+              </article>
+            </div>
+          </div>
+
+          <aside class="hero-side">
+            <div class="hero-card">
+              <span class="hero-card__label">Primary URL</span>
+              <strong>labs.jininfra.cloud</strong>
+            </div>
+            <div class="hero-card">
+              <span class="hero-card__label">Available Runtimes</span>
+              {{ range .RuntimeSummaries }}
+              <strong>{{ .Label }} {{ range $index, $version := .Versions }}{{ if $index }}, {{ end }}{{ $version }}{{ end }}</strong>
+              {{ end }}
+            </div>
+            <div class="hero-card hero-card--light">
+              <span class="hero-card__label">Quick Start</span>
+              <ul class="hero-steps">
+                <li>언어와 버전을 선택합니다.</li>
+                <li>예제 코드나 학습 코드를 입력합니다.</li>
+                <li>실행 결과와 종료코드를 바로 확인합니다.</li>
+              </ul>
+            </div>
+          </aside>
+        </section>
+
+        <section class="workspace">
+          <section class="panel panel--editor">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Run</p>
+                <h2>코드 입력</h2>
+              </div>
+              <p class="section-note">화이트 기반 입력 화면에 브랜드 컬러를 포인트로 적용했습니다.</p>
+            </div>
+
+            <form id="runner-form" class="runner-form">
+              <div class="controls">
+                <label>
+                  <span>언어</span>
+                  <select name="language">
+                    {{ range .RuntimeSummaries }}
+                    <option value="{{ .Key }}">{{ .Label }}</option>
+                    {{ end }}
+                  </select>
+                </label>
+                <label>
+                  <span>버전</span>
+                  <select name="version"></select>
+                </label>
+              </div>
+
+              <label class="editor">
+                <span>코드</span>
+                <textarea name="code" spellcheck="false">score = 83
+
+if score >= 60:
+    print("합격")
+else:
+    print("불합격")
+
+print("labs.jininfra.cloud")</textarea>
+              </label>
+
+              <div class="actions">
+                <p class="action-hint">실행 결과는 하단 콘솔에 즉시 반영됩니다.</p>
+                <button type="submit">실행</button>
+              </div>
+            </form>
+          </section>
+
+          <aside class="panel panel--info">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Guide</p>
+                <h2>학습용 안내</h2>
+              </div>
+            </div>
+
+            <div class="info-list">
+              <article class="info-item">
+                <strong>입력 단위</strong>
+                <span>간단한 알고리즘, 문법, 자료구조, 컴파일 예제를 빠르게 검증하기에 적합합니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>실행 방식</strong>
+                <span>실행 요청마다 독립된 환경에서 처리하므로 다른 사용자의 결과와 충돌하지 않습니다.</span>
+              </article>
+              <article class="info-item">
+                <strong>이용 순서</strong>
+                <span>언어 선택 후 코드를 입력하고 실행하면 결과와 종료코드를 바로 확인할 수 있습니다.</span>
+              </article>
+            </div>
+          </aside>
+        </section>
+
+        <section class="panel panel--result result-panel">
+          <div class="result-header">
+            <div>
+              <p class="section-kicker">Output</p>
+              <h2>실행 결과</h2>
+            </div>
+            <span id="status-badge" class="badge" data-state="idle">대기 중</span>
+          </div>
+          <pre id="result-box">아직 실행하지 않았습니다.</pre>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const runtimeOptions = {{ .RuntimeOptions }};
+      const sampleCode = {
+        python: `score = 83
+
+if score >= 60:
+    print("합격")
+else:
+    print("불합격")
+
+print("labs.jininfra.cloud")`,
+        java: `public class Main {
+    public static void main(String[] args) {
+        int score = 83;
+
+        if (score >= 60) {
+            System.out.println("합격");
+        } else {
+            System.out.println("불합격");
+        }
+
+        System.out.println("labs.jininfra.cloud");
+    }
+}`,
+        c: `#include <stdio.h>
+
+int main(void) {
+    int score = 83;
+
+    if (score >= 60) {
+        puts("합격");
+    } else {
+        puts("불합격");
+    }
+
+    puts("labs.jininfra.cloud");
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    int score = 83;
+
+    if (score >= 60) {
+        std::cout << "합격\\n";
+    } else {
+        std::cout << "불합격\\n";
+    }
+
+    std::cout << "labs.jininfra.cloud\\n";
+    return 0;
+}`,
+      };
+
+      const form = document.getElementById("runner-form");
+      const resultBox = document.getElementById("result-box");
+      const statusBadge = document.getElementById("status-badge");
+      const languageSelect = form.elements.namedItem("language");
+      const versionSelect = form.elements.namedItem("version");
+      const codeField = form.elements.namedItem("code");
+      let currentLanguage = languageSelect.value || "python";
+
+      function setStatus(label, state) {
+        statusBadge.textContent = label;
+        statusBadge.dataset.state = state;
+      }
+
+      function populateVersions(language, preferredVersion) {
+        const versions = runtimeOptions[language] || [];
+        versionSelect.innerHTML = "";
+
+        versions.forEach((version) => {
+          const option = document.createElement("option");
+          option.value = version;
+          option.textContent = version;
+          versionSelect.appendChild(option);
+        });
+
+        if (preferredVersion && versions.includes(preferredVersion)) {
+          versionSelect.value = preferredVersion;
+        }
+      }
+
+      function maybeSwapSample(nextLanguage) {
+        const currentValue = codeField.value.trim();
+        const currentSample = (sampleCode[currentLanguage] || "").trim();
+
+        if (currentValue === "" || currentValue === currentSample) {
+          codeField.value = sampleCode[nextLanguage] || "";
+        }
+      }
+
+      populateVersions(currentLanguage);
+      codeField.value = sampleCode[currentLanguage] || codeField.value;
+
+      languageSelect.addEventListener("change", () => {
+        const nextLanguage = languageSelect.value;
+        maybeSwapSample(nextLanguage);
+        populateVersions(nextLanguage);
+        currentLanguage = nextLanguage;
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setStatus("실행 중", "running");
+        resultBox.textContent = "실행 요청을 전송했습니다...";
+
+        const formData = new FormData(form);
+        const payload = {
+          language: formData.get("language"),
+          version: formData.get("version"),
+          code: formData.get("code"),
+        };
+
+        try {
+          const response = await fetch("/api/run", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            setStatus("오류", "error");
+            resultBox.textContent = data.error || "실행에 실패했습니다.";
+            return;
+          }
+
+          setStatus(data.status, data.status === "succeeded" ? "success" : "error");
+          resultBox.textContent = [
+            `runId: ${data.runId}`,
+            `backend: ${data.backend}`,
+            `image: ${data.image}`,
+            `exitCode: ${data.exitCode}`,
+            "",
+            "[stdout]",
+            data.stdout || "",
+            "",
+            "[stderr]",
+            data.stderr || "",
+          ].join("\n");
+        } catch (error) {
+          setStatus("오류", "error");
+          resultBox.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>
