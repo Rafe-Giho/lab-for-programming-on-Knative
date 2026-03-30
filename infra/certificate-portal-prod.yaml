@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: portal-labs-jininfra-cloud-tls
+  namespace: knative-serving
+spec:
+  secretName: portal-labs-jininfra-cloud-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - labs.jininfra.cloud
+    - portal.study.labs.jininfra.cloud
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  duration: 2160h
+  renewBefore: 720h
