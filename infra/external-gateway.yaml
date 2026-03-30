@@ -27,3 +27,27 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: https-root
+      hostname: "labs.jininfra.cloud"
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: portal-labs-jininfra-cloud-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-portal-study
+      hostname: "portal.study.labs.jininfra.cloud"
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: portal-labs-jininfra-cloud-tls
+      allowedRoutes:
+        namespaces:
+          from: All
