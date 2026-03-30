@@ -245,7 +245,7 @@ kubectl get cm config-domain -n knative-serving -o yaml
 
 앱 배포는 별도 문서를 따른다.
 
-- [../docs/app/python-runner-application-development-guide.md](../docs/app/python-runner-application-development-guide.md)
+- [../app/python-runner-application-development-guide.md](../app/python-runner-application-development-guide.md)
 
 앱을 배포하면 최종적으로 아래 두 주소가 함께 열려야 한다.
 

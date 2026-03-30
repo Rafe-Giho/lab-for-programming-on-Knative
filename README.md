@@ -2,7 +2,7 @@
 
 현재 기준으로 실제로 따라갈 문서는 아래 두 개다.
 
-- 인프라: [infra/01-knative-gateway-api-build-guide.md](./infra/01-knative-gateway-api-build-guide.md)
+- 인프라: [docs/infra/knative-gateway-api-build-guide.md](./docs/infra/knative-gateway-api-build-guide.md)
 - 앱 배포: [docs/app/python-runner-application-development-guide.md](./docs/app/python-runner-application-development-guide.md)
 
 현재 상태:

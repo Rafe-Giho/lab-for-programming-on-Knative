@@ -2,7 +2,7 @@
 
 현재 기준 문서는 아래 두 개만 본다.
 
-- 인프라 구축: [../infra/01-knative-gateway-api-build-guide.md](../infra/01-knative-gateway-api-build-guide.md)
+- 인프라 구축: [infra/knative-gateway-api-build-guide.md](./infra/knative-gateway-api-build-guide.md)
 - 애플리케이션 배포: [app/python-runner-application-development-guide.md](./app/python-runner-application-development-guide.md)
 
 현재 범위:

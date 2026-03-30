@@ -8,7 +8,7 @@
 
 전제:
 
-- 인프라는 [../../infra/01-knative-gateway-api-build-guide.md](../../infra/01-knative-gateway-api-build-guide.md) 기준으로 `HTTP`까지 완료
+- 인프라는 [../infra/knative-gateway-api-build-guide.md](../infra/knative-gateway-api-build-guide.md) 기준으로 `HTTP`까지 완료
 - `labs.jininfra.cloud`와 `*.study.labs.jininfra.cloud` DNS 연결 완료
 - Knative Gateway API 경로 정상
 
