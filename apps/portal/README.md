@@ -19,6 +19,7 @@
 - 포털은 Knative Service로 배포됩니다.
 - 코드 실행은 요청마다 별도 Kubernetes Job/Pod로 처리됩니다.
 - 실행 네임스페이스는 `code-runner-exec`입니다.
+- 포털 실행 설정과 runner 이미지 값은 `deployments/configmap.yaml`로 관리합니다.
 
 즉 포털은 서버 역할을, runner는 배치 실행 역할을 맡는 구조입니다.
 

@@ -120,6 +120,7 @@ Job TTL:
 
 - 포털 실행 설정과 runner 이미지 값은 `ConfigMap`으로 관리합니다.
 - 현재 환경 변수 중 민감정보는 없으므로 별도 `Secret`은 사용하지 않습니다.
+- 화면에 표시하는 공개 주소도 `PUBLIC_BASE_URL` 값으로 관리합니다.
 
 ## 6. 빌드 대상
 
@@ -139,6 +140,12 @@ Job TTL:
 docker build -t shinkiho/python-runner-portal:0.1.0 ./apps/portal
 docker push shinkiho/python-runner-portal:0.1.0
 ```
+
+참고:
+
+- 현재 포털 Dockerfile은 `cmd`, `internal`, `web` 레이어를 분리해 두었습니다.
+- 따라서 `web/templates`, `web/static`만 수정한 경우에는 Go 바이너리 빌드 구간이 불필요하게 다시 오래 걸리지 않도록 개선되어 있습니다.
+- Docker Desktop 또는 Docker Engine 최신 버전에서는 일반적으로 BuildKit이 기본 활성화되어 있습니다.
 
 ### 7.2 Python
 
@@ -183,6 +190,13 @@ docker push shinkiho/runner-cpp:gxx-14
 - [ksvc.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/ksvc.yaml)
 - [domain-claim.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/domain-claim.yaml)
 - [domain-mapping.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/domain-mapping.yaml)
+
+`configmap.yaml`에는 아래 성격의 값이 들어 있습니다.
+
+- 공개 주소 표시값
+- 포털 실행 모드
+- runner Job 제한값
+- 언어별 runner 이미지 주소
 
 ## 9. Kubernetes 적용 순서
 
