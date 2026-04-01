@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Port                     string
+	PublicBaseURL            string
 	ExecutorMode             string
 	RunnerNamespace          string
 	RunnerServiceAccountName string
@@ -28,6 +29,7 @@ type Config struct {
 func MustLoad() Config {
 	cfg := Config{
 		Port:                     getEnv("PORT", "8080"),
+		PublicBaseURL:            getEnv("PUBLIC_BASE_URL", "https://labs.jininfra.cloud"),
 		ExecutorMode:             strings.ToLower(getEnv("EXECUTOR_MODE", "mock")),
 		RunnerNamespace:          getEnv("RUNNER_NAMESPACE", "code-runner-exec"),
 		RunnerServiceAccountName: getEnv("RUNNER_SERVICE_ACCOUNT_NAME", ""),

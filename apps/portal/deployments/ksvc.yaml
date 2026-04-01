@@ -10,8 +10,11 @@ spec:
       timeoutSeconds: 30
       serviceAccountName: portal
       containers:
-        - image: shinkiho/python-runner-portal:0.1.0
+        - image: shinkiho/python-runner-portal:0.1.1
           imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: portal-config
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -36,34 +39,3 @@ spec:
             limits:
               cpu: 300m
               memory: 256Mi
-          env:
-            - name: EXECUTOR_MODE
-              value: "kubernetes"
-            - name: RUNNER_NAMESPACE
-              value: "code-runner-exec"
-            - name: MAX_CODE_BYTES
-              value: "20000"
-            - name: EXECUTION_TIMEOUT_SECONDS
-              value: "10"
-            - name: JOB_WAIT_TIMEOUT_SECONDS
-              value: "20"
-            - name: JOB_TTL_SECONDS
-              value: "300"
-            - name: RUNNER_IMAGE_PULL_POLICY
-              value: "IfNotPresent"
-            - name: RUNNER_CPU_REQUEST
-              value: "100m"
-            - name: RUNNER_MEMORY_REQUEST
-              value: "192Mi"
-            - name: RUNNER_CPU_LIMIT
-              value: "500m"
-            - name: RUNNER_MEMORY_LIMIT
-              value: "512Mi"
-            - name: PYTHON_IMAGE_3_11
-              value: shinkiho/runner-python:3.11
-            - name: JAVA_IMAGE_17
-              value: shinkiho/runner-java:17
-            - name: C_IMAGE_GCC_14
-              value: shinkiho/runner-c:gcc-14
-            - name: CPP_IMAGE_GXX_14
-              value: shinkiho/runner-cpp:gxx-14

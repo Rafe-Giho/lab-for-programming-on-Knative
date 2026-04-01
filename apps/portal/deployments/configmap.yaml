@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portal-config
+  namespace: study
+data:
+  PUBLIC_BASE_URL: "https://labs.jininfra.cloud"
+  EXECUTOR_MODE: "kubernetes"
+  RUNNER_NAMESPACE: "code-runner-exec"
+  MAX_CODE_BYTES: "20000"
+  EXECUTION_TIMEOUT_SECONDS: "10"
+  JOB_WAIT_TIMEOUT_SECONDS: "20"
+  JOB_TTL_SECONDS: "300"
+  RUNNER_IMAGE_PULL_POLICY: "IfNotPresent"
+  RUNNER_CPU_REQUEST: "100m"
+  RUNNER_MEMORY_REQUEST: "192Mi"
+  RUNNER_CPU_LIMIT: "500m"
+  RUNNER_MEMORY_LIMIT: "512Mi"
+  PYTHON_IMAGE_3_11: "shinkiho/runner-python:3.11"
+  JAVA_IMAGE_17: "shinkiho/runner-java:17"
+  C_IMAGE_GCC_14: "shinkiho/runner-c:gcc-14"
+  CPP_IMAGE_GXX_14: "shinkiho/runner-cpp:gxx-14"

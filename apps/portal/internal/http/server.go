@@ -31,6 +31,7 @@ type ViewData struct {
 	Languages         []string
 	RuntimeOptions    template.JS
 	RuntimeSummaries  []runtimecatalog.LanguageSummary
+	PublicBaseURL     string
 	ExecutorMode      string
 	CurrentPath       string
 }
@@ -111,6 +112,7 @@ func (s *Server) newViewData(currentPath string) ViewData {
 		Languages:        s.catalog.Languages(),
 		RuntimeOptions:   template.JS(runtimeOptions),
 		RuntimeSummaries: s.catalog.Summaries(),
+		PublicBaseURL:    s.config.PublicBaseURL,
 		ExecutorMode:     s.config.ExecutorMode,
 		CurrentPath:      currentPath,
 	}
