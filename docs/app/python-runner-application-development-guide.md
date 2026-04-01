@@ -116,6 +116,11 @@ Job TTL:
 
 - `300초`
 
+현재 설정 관리 방식:
+
+- 포털 실행 설정과 runner 이미지 값은 `ConfigMap`으로 관리합니다.
+- 현재 환경 변수 중 민감정보는 없으므로 별도 `Secret`은 사용하지 않습니다.
+
 ## 6. 빌드 대상
 
 총 5개 이미지를 빌드합니다.
@@ -170,6 +175,7 @@ docker push shinkiho/runner-cpp:gxx-14
 ## 8. 배포 전 점검 파일
 
 - [namespace.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/namespace.yaml)
+- [configmap.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/configmap.yaml)
 - [exec-namespace.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/exec-namespace.yaml)
 - [serviceaccount.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/serviceaccount.yaml)
 - [rbac.yaml](C:/Users/user/Desktop/신기호/업무용/30.PoC/knative/apps/portal/deployments/rbac.yaml)
@@ -182,6 +188,7 @@ docker push shinkiho/runner-cpp:gxx-14
 
 ```bash
 kubectl apply -f apps/portal/deployments/namespace.yaml
+kubectl apply -f apps/portal/deployments/configmap.yaml
 kubectl apply -f apps/portal/deployments/exec-namespace.yaml
 kubectl apply -f apps/portal/deployments/serviceaccount.yaml
 kubectl apply -f apps/portal/deployments/rbac.yaml

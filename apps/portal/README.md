@@ -35,6 +35,7 @@
 
 ## 배포 파일
 
+- `deployments/configmap.yaml`
 - `deployments/namespace.yaml`
 - `deployments/exec-namespace.yaml`
 - `deployments/serviceaccount.yaml`
