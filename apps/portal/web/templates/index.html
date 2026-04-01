@@ -235,13 +235,8 @@ int main() {
         }
       }
 
-      function maybeSwapSample(nextLanguage) {
-        const currentValue = codeField.value.trim();
-        const currentSample = (sampleCode[currentLanguage] || "").trim();
-
-        if (currentValue === "" || currentValue === currentSample) {
-          codeField.value = sampleCode[nextLanguage] || "";
-        }
+      function applySampleCode(nextLanguage) {
+        codeField.value = sampleCode[nextLanguage] || "";
       }
 
       populateVersions(currentLanguage);
@@ -249,7 +244,7 @@ int main() {
 
       languageSelect.addEventListener("change", () => {
         const nextLanguage = languageSelect.value;
-        maybeSwapSample(nextLanguage);
+        applySampleCode(nextLanguage);
         populateVersions(nextLanguage);
         currentLanguage = nextLanguage;
       });
