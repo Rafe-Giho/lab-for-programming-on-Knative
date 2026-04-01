@@ -10,3 +10,5 @@
 - 실행기는 요청마다 `Kubernetes Job`으로 동작합니다.
 
 즉 `apps`는 HTTP 서비스 계층이며, 실제 코드 실행은 `runtimes` 이미지와 `code-runner-exec` Job이 담당합니다.
+
+<img width="1061" height="1823" alt="image" src="https://github.com/user-attachments/assets/dd1425a2-5ef4-4a04-875a-97327f8aab2d" />
